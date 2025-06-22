@@ -1,0 +1,77 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: ingress-nginx
+  namespace: argocd
+spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  generators:
+    - matrix:
+        generators:
+          - git:
+              repoURL: https://github.com/iamvishnuks/argocd-workshop
+              revision: main
+              files:
+                - path: apps/infgress-nginx/env.yaml
+          - list:
+              elementsYaml: |-
+                {{- range .environments }}
+                {{- $env := . }}
+                {{- range .apps }}
+                {{- if eq .name "ingress-nginx" }}
+                - environment: {{ $env.name }}
+                  targetRevision: {{ .targetRevision }}
+                  cluster: {{ $env.name }}
+                  env: {{ $env.env }}
+                  namespace: {{ .namespace | default "default" }}
+                  name: {{ .name }}-{{ $env.name }}
+                  deploymentName: {{ .deploymentName }}
+                  {{- if (index . "loadBalancerIP") }}
+                  loadBalancerIP: {{ .loadBalancerIP }}
+                  {{- else }}
+                  loadBalancerIP: null
+                  {{- end }}
+                  repoURL: {{ $.common.repoURL }}
+                  chart: {{ .name }}
+                  project: {{ $.common.project }}
+                  values: {{ .values }}
+                  {{- if (index . "replicaCount") }}
+                  replicaCount: {{ .replicaCount }}
+                  {{- else }}
+                  replicaCount: 1
+                  {{- end }}
+                {{- end }}
+                {{- end }}
+                {{- end }}
+  template:
+    metadata:
+      name: '{{.name}}'
+      namespace: argocd
+      finalizers:
+        - resources-finalizer.argocd.argoproj.io
+    spec:
+      project: '{{.project}}'
+      source:
+        repoURL: '{{.repoURL}}'
+        targetRevision: '{{.targetRevision}}'
+        chart: '{{ .chart }}'
+        helm:
+          valueFiles:
+            - '{{ .values }}'
+          parameters: 
+            - name: controller.service.loadBalancerIP
+              value: '{{ .loadBalancerIP }}'
+            - name: fullnameOverride
+              value: '{{ .deploymentName }}'
+            - name: controller.replicaCount
+              value: '{{ .replicaCount }}'
+      destination:
+        name: '{{.cluster}}'
+        namespace: '{{.namespace}}'
+      syncPolicy:
+        automated:
+          selfHeal: true
+          prune: false
+        syncOptions:
+          - CreateNamespace=true 
