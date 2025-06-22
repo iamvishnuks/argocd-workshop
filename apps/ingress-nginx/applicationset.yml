@@ -13,7 +13,7 @@ spec:
               repoURL: https://github.com/iamvishnuks/argocd-workshop
               revision: main
               files:
-                - path: apps/infgress-nginx/env.yaml
+                - path: apps/infgress-nginx/env.yml
           - list:
               elementsYaml: |-
                 {{- range .environments }}
