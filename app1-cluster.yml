@@ -3,6 +3,12 @@ apiVersion: kind.x-k8s.io/v1alpha4
 name: app1
 nodes:
   - role: control-plane
+    kubeadmConfigPatches:
+    - |
+      kind: InitConfiguration
+      nodeRegistration:
+        kubeletExtraArgs:
+          system-reserved: memory=4Gi
     extraPortMappings:
     - containerPort: 30001
       hostPort: 30001
