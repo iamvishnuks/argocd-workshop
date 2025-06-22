@@ -21,3 +21,18 @@ Run the following commands to set up the clusters and argocd:
 ```bash
 make all
 ```
+
+## Add clusters and deploy ingress with argocd
+
+Add the clusters to argocd:
+
+```bash
+kubectl apply -f manifests/app1-secret.yml
+kubectl apply -f manifests/app2-secret.yml
+```
+
+Deploy the ingress controller:
+
+```bash
+kubectl apply -f apps/ingress-nginx/applicationset.yml
+```
